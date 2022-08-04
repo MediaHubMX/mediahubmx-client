@@ -1,0 +1,30 @@
+kind: pipeline
+type: docker
+name: test
+
+platform:
+  os: linux
+  arch: amd64
+
+trigger:
+  event:
+    - push
+    - tag
+    - promote
+    - cron
+
+steps:
+  - name: setup
+    image: node:16-alpine
+    commands:
+      - npm install
+
+  - name: lint
+    image: node:16-alpine
+    commands:
+      - npm run lint
+
+  - name: test
+    image: node:16-alpine
+    commands:
+      - yarn run test

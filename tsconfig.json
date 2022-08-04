@@ -1,0 +1,13 @@
+{
+  "compilerOptions": {
+    "lib": ["es2020", "dom"],
+    "module": "commonjs",
+    "target": "es2019",
+    "declaration": true,
+    "strictNullChecks": true,
+    "esModuleInterop": true,
+    "moduleResolution": "node",
+    "outDir": "dist"
+  },
+  "include": ["src"]
+}
