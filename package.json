@@ -1,7 +1,7 @@
 {
   "name": "@mediahubmx/client",
   "description": "MediaHubMX client",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "main": "dist",
   "scripts": {
     "test": "jest",
