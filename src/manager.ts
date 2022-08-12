@@ -19,6 +19,7 @@ import {
   TranslatedText,
   VirtualMovieItem,
 } from "@mediahubmx/schema";
+import cloneDeep from "lodash.clonedeep";
 import flatten from "lodash.flatten";
 import isEqual from "lodash.isequal";
 import uniqBy from "lodash.uniqby";
@@ -103,6 +104,8 @@ type CallCatalogProps = BaseCallProps & {
 
 type CallItemProps = BaseCallProps & {
   item: PlayableItem;
+  maxDepth?: number;
+  onUpdate?: (item: PlayableItem) => void;
   onError?: OnCallErrorFn;
 };
 
@@ -1065,34 +1068,49 @@ export class Manager {
   /**
    * Call the `item` addon action.
    */
-  public async callItem({ item, onError, options }: CallItemProps) {
-    const contexts = filterAddons(this.addons, {
-      action: "item",
-      itemType: item.type,
-      item,
-    });
-
-    await Promise.all(
-      contexts.map(async (context) => {
-        try {
-          const newItem = await context.addon.call({
-            options: { ...this.addonCallOptions, ...options },
-            action: "item",
-            input: {
-              ...this.defaultRequestParams,
-              ...this.itemToRequest(context.addon, item),
-            },
-          });
-          if (newItem) {
-            item = <PlayableItem>createItem(context.addon.props, newItem, item);
+  public async callItem({
+    item,
+    maxDepth = 3,
+    onUpdate,
+    onError,
+    options,
+  }: CallItemProps) {
+    const metas = {};
+    for (let i = 0; i < maxDepth; i++) {
+      const contexts = filterAddons(this.addons, {
+        action: "item",
+        itemType: item.type,
+        item,
+      }).filter(
+        (context) => !isEqual(context.meta, metas[context.addon.props.id])
+      );
+      if (contexts.length === 0) break;
+      await Promise.all(
+        contexts.map(async (context) => {
+          metas[context.addon.props.id] = cloneDeep(context.meta);
+          try {
+            const newItem = await context.addon.call({
+              options: { ...this.addonCallOptions, ...options },
+              action: "item",
+              input: {
+                ...this.defaultRequestParams,
+                ...this.itemToRequest(context.addon, item),
+              },
+            });
+            if (newItem) {
+              item = <PlayableItem>(
+                createItem(context.addon.props, newItem, item)
+              );
+              if (onUpdate) onUpdate(item);
+            }
+          } catch (error) {
+            if (error.message !== "empty") {
+              if (onError) onError(context.addon, error);
+            }
           }
-        } catch (error) {
-          if (error.message !== "empty") {
-            if (onError) onError(context.addon, error);
-          }
-        }
-      })
-    );
+        })
+      );
+    }
     return item;
   }
 

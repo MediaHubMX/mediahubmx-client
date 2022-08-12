@@ -19,11 +19,6 @@ steps:
     commands:
       - npm install
 
-  - name: lint
-    image: node:16-alpine
-    commands:
-      - npm run lint
-
   - name: test
     image: node:16-alpine
     commands:

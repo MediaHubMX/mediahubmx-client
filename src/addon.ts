@@ -204,7 +204,7 @@ export abstract class BaseAddonClass {
               addonId: item.addonId ?? this.props.id,
               pageId: item.pageId ?? page.id,
               id: item.id ?? "",
-              key: `${page.key}/${item.id ?? ""}`,
+              key: `${item.addonId ?? this.props.id}/${item.id ?? ""}`,
             };
         }
       });
