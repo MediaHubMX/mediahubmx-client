@@ -704,6 +704,7 @@ export class Manager {
         if (!rootAddons[i]) continue;
         const addon = this.getAddon(rootAddons[i]);
         if (!addon) continue;
+        if (sorted.find((a) => a.props.id === addon.props.id)) continue;
         iter(addon);
       }
       if (this.addons.length !== sorted.length) {

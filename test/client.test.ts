@@ -191,11 +191,32 @@ describe("client", () => {
     manager.getAddonOrThrow("xample-worker1");
   });
 
-  test("watchup-bundle, requirements", async () => {
+  test("where-to-watch, endpoints", async () => {
     await expect(
       manager.load({
         ...loadDefaults,
-        inputs: [{ url: "https://mhub.mx/bundles/watchup-bundle" }],
+        // inputs: [{ userInput: "mhub.mx/bundles/where-to-watch" }],
+        inputs: [{ url: "http://mhub.mx/bundles/where-to-watch" }],
+        discover: false,
+      })
+    ).resolves.toBeUndefined();
+    expect(manager.getAddons().length).toBe(4);
+    expect(manager.getRootAddons().length).toBe(1);
+    expect(manager.getChildAddons().length).toBe(3);
+    expect(
+      manager
+        .getAddons()
+        .map((a) => a.getEndpoints())
+        .flat().length
+    ).toBe(4);
+  });
+
+  test("where-to-watch, requirements", async () => {
+    await expect(
+      manager.load({
+        ...loadDefaults,
+        // inputs: [{ userInput: "mhub.mx/bundles/where-to-watch" }],
+        inputs: [{ url: "http://mhub.mx/bundles/where-to-watch" }],
         discover: false,
       })
     ).resolves.toBeUndefined();
@@ -208,7 +229,7 @@ describe("client", () => {
     await expect(
       manager.load({
         ...loadDefaults,
-        inputs: [{ url: "https://mhub.mx/bundles/watchup-bundle" }],
+        inputs: [{ url: "https://www.mhub.mx/bundles/where-to-watch" }],
         discover: false,
         availableAddonProps,
       })
@@ -217,25 +238,25 @@ describe("client", () => {
     expect(manager.getRootAddons().length).toBe(1);
     expect(manager.getChildAddons().length).toBe(3);
 
-    manager.getAddonOrThrow("watchup-bundle");
-    expect(manager.getAddon("watchup-bundle")?.infos.requirePath).toMatchObject(
+    manager.getAddonOrThrow("where-to-watch");
+    expect(manager.getAddon("where-to-watch")?.infos.requirePath).toMatchObject(
       []
     );
     expect(manager.getAddon("tmdb")?.infos.requirePath).toMatchObject([
-      "watchup-bundle",
+      "where-to-watch",
     ]);
   });
 
-  test("watchup-bundle, browse", async () => {
+  test("where-to-watch, browse", async () => {
     await expect(
       manager.load({
         ...loadDefaults,
-        inputs: [{ url: "https://mhub.mx/bundles/watchup-bundle" }],
+        inputs: [{ url: "https://mhub.mx/bundles/where-to-watch" }],
         discover: false,
       })
     ).resolves.toBeUndefined();
     expect(manager.getAddons().length).toBe(4);
-    manager.getAddonOrThrow("watchup-bundle");
+    manager.getAddonOrThrow("where-to-watch");
     expect(manager.getCatalog("tmdb", "movie")?.id).toBe("movie");
     expect(manager.getCatalog("tmdb", "series")?.id).toBe("series");
 
@@ -631,14 +652,14 @@ describe("client", () => {
     await expect(
       m2.load({
         ...loadDefaults,
-        inputs: [{ url: "https://www.mhub.mx/bundles/watchup-bundle" }],
+        inputs: [{ url: "https://www.mhub.mx/bundles/where-to-watch" }],
         discover: false,
         availableAddonProps: manager.getAddons().map((addon) => addon.props),
       })
     ).resolves.toBeUndefined();
     expect(m2.getAddons().length).toBe(4);
     m2.getAddonOrThrow("tmdb");
-    m2.getAddonOrThrow("watchup-bundle");
+    m2.getAddonOrThrow("where-to-watch");
     m2.getAddonOrThrow("wer-streamt-es");
     m2.getAddonOrThrow("youtube-resolver");
     console.log("t2", Date.now() - t2);
