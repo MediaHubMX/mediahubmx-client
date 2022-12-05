@@ -768,6 +768,19 @@ export class Manager {
   }
 
   /**
+   * Returns all root addon links as `AddonLink`.
+   */
+  public getAddonLinks() {
+    return uniqBy(
+      this.getRootAddons()
+        .filter((addon) => this.miscOptions.adult || !addon.props.adult)
+        .map((addon) => addon.getLinks())
+        .flat(),
+      "id"
+    );
+  }
+
+  /**
    * Returns all catalogs as `DashboardItem`.
    * The `adult` filter is appliled.
    */

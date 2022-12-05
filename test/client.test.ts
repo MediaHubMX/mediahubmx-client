@@ -209,6 +209,12 @@ describe("client", () => {
         .map((a) => a.getEndpoints())
         .flat().length
     ).toBe(4);
+    expect(manager.getAddonLinks().length).toBe(1);
+
+    // const addon = manager.getRootAddons()[0];
+    // console.log(JSON.stringify(addon.props, null, 2));
+    // console.log(JSON.stringify(addon.getEndpoints(), null, 2));
+    // console.log(JSON.stringify(manager.getAddonLinks(), null, 2));
   });
 
   test("where-to-watch, requirements", async () => {

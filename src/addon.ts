@@ -62,6 +62,26 @@ export abstract class BaseAddonClass {
     return this.props.actions ?? [];
   }
 
+  public getLinks() {
+    return (
+      this.props.links?.map((link) => ({
+        ...link,
+        endpoints: uniq(
+          link.endpoints
+            ?.map((ep) => (ep === "." ? this.getEndpoints() : ep))
+            .flat() ?? this.getEndpoints()
+        ),
+      })) ?? [
+        {
+          id: this.props.id,
+          name: this.props.name,
+          icon: this.props.icon,
+          endpoints: this.getEndpoints(),
+        },
+      ]
+    );
+  }
+
   public getEndpoints() {
     return this.props.endpoints ?? [];
   }

@@ -28,6 +28,15 @@ export const createAddon = (addon: Addon, oldAddon?: Addon) => {
     addon.endpoints = uniq(addon.endpoints.map(stripAddonUrl));
   }
 
+  // links
+  if (addon.links) {
+    for (const link of addon.links) {
+      if (link.endpoints) {
+        link.endpoints = uniq(link.endpoints.map(stripAddonUrl));
+      }
+    }
+  }
+
   // actions
   const actions = addon.actions ?? [];
 
