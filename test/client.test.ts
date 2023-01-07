@@ -363,12 +363,12 @@ describe("client", () => {
     expect(manager.getAddons().length).toBe(1);
     manager.getAddonOrThrow("youtube-resolver");
 
-    const resolved = await manager.callResolve({
+    const result = await manager.callResolve({
       resolvable: { url: "https://www.youtube.com/watch?v=qCNu_vJNLMQ" },
       onError: onCallError,
     });
-    expect(resolved.lastError).toBeNull();
-    expect(resolved.resolved.length).toBeGreaterThan(0);
+    expect(result.lastError).toBeNull();
+    expect(result.resolvedUrls.length).toBeGreaterThan(0);
   });
 
   test("main repo", async () => {

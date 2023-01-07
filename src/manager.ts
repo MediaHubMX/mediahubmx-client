@@ -77,7 +77,7 @@ type Options = AddonCallOptions & DefaultRequestParams & MiscOptions;
 
 type ResolveResult = {
   lastError: null | string;
-  resolved: ResolvedUrl[];
+  resolvedUrls: ResolvedUrl[];
 };
 
 type BaseCallProps = {
@@ -1284,23 +1284,23 @@ export class Manager {
         if (!result) continue;
 
         // addAddonToItem(item, context.addon);
-        let resolved: ResolvedUrl[];
+        let resolvedUrls: ResolvedUrl[];
         if (typeof result === "string") {
-          resolved = [{ url: result }];
+          resolvedUrls = [{ url: result }];
         } else if (!Array.isArray(result)) {
-          resolved = [result];
+          resolvedUrls = [result];
         } else {
-          resolved = result.map((url) =>
+          resolvedUrls = result.map((url) =>
             typeof url === "string" ? { url } : url
           );
         }
-        if (!resolved.length) continue;
+        if (!resolvedUrls.length) continue;
 
-        const nextResolvable = resolved.find((r) => r.resolveAgain);
+        const nextResolvable = resolvedUrls.find((r) => r.resolveAgain);
         if (nextResolvable) {
-          if (resolved.length > 1) {
+          if (resolvedUrls.length > 1) {
             throw new Error(
-              "Can not resolve in chains with more than one resolved item"
+              "Can not resolve in chains with more than one resolved url item"
             );
           }
           return await this.callResolve({
@@ -1310,7 +1310,7 @@ export class Manager {
           });
         }
 
-        return { lastError: null, resolved };
+        return { lastError: null, resolvedUrls };
       } catch (error) {
         lastError = `${context.addon.props.name}: ${error.message}`;
         if (onError) onError(context.addon, error);
@@ -1320,10 +1320,10 @@ export class Manager {
     if (contexts.length === 0) {
       return {
         lastError,
-        resolved: [{ name: resolvable.name, url: resolvable.url }],
+        resolvedUrls: [{ name: resolvable.name, url: resolvable.url }],
       };
     } else {
-      return { lastError, resolved: [] };
+      return { lastError, resolvedUrls: [] };
     }
   }
 

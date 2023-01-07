@@ -89,7 +89,7 @@ declare module "@mediahubmx/schema" {
   interface VirtualMovieItem extends ClientKeyPatch {}
   interface SeriesEpisodeItem extends ClientKeyPatch {}
   interface ChannelItem extends ClientKeyPatch {}
-  interface UnkownItem extends ClientKeyPatch {}
+  interface UnknownItem extends ClientKeyPatch {}
   interface IptvItem extends ClientKeyPatch {}
 
   interface Source extends ClientKeyPatch, ClientSourcePatch {}

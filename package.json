@@ -1,7 +1,7 @@
 {
   "name": "@mediahubmx/client",
   "description": "MediaHubMX client",
-  "version": "1.1.0",
+  "version": "1.1.2",
   "main": "dist",
   "scripts": {
     "test": "jest",
@@ -9,7 +9,7 @@
     "publish": "npm run build && npm publish"
   },
   "dependencies": {
-    "@mediahubmx/schema": "^1.1.0",
+    "@mediahubmx/schema": "^1.2.0",
     "buffer": "^6.0.3",
     "lodash.clonedeep": "^4.5.0",
     "lodash.flatten": "^4.4.0",
@@ -21,7 +21,7 @@
     "url-parse": "^1.5.10"
   },
   "devDependencies": {
-    "@types/jest": "^29.2.3",
+    "@types/jest": "^29.2.6",
     "@types/lodash": "^4.14.191",
     "@types/lodash.clonedeep": "^4.5.7",
     "@types/lodash.flatten": "^4.4.7",
@@ -34,8 +34,8 @@
     "jest": "^29.3.1",
     "lint-staged": "^13.1.0",
     "simple-git-hooks": "^2.8.1",
-    "ts-jest": "^29.0.3",
-    "typescript": "^4.9.3"
+    "ts-jest": "^29.0.5",
+    "typescript": "^4.9.4"
   },
   "files": [
     "dist"
