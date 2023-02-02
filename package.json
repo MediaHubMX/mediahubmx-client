@@ -9,7 +9,7 @@
     "publish": "npm run build && npm publish"
   },
   "dependencies": {
-    "@mediahubmx/schema": "^1.2.0",
+    "@mediahubmx/schema": "^1.2.2",
     "buffer": "^6.0.3",
     "lodash.clonedeep": "^4.5.0",
     "lodash.flatten": "^4.4.0",

@@ -36,7 +36,7 @@ describe("client", () => {
       endpointTestTimeout: 5000,
       loadNextTimeout: 1000,
       signature:
-        "eyJkYXRhIjoie1xuICBcInRpbWVcIjogMTY1OTc1NjYyNTAwMCxcbiAgXCJ2YWxpZFVudGlsXCI6IDE2NTk4NDMwMjUwMDAsXG4gIFwidXNlclwiOiBcImZvb2JhclwiLFxuICBcInN0YXR1c1wiOiBcImd1ZXN0XCIsXG4gIFwiaXBzXCI6IFtdLFxuICBcImFwcFwiOiB7XG4gICAgXCJuYW1lXCI6IFwiZm9vXCIsXG4gICAgXCJ2ZXJzaW9uXCI6IFwiMS4yLjNcIixcbiAgICBcInBsYXRmb3JtXCI6IFwidGVzdFwiLFxuICAgIFwib2tcIjogdHJ1ZVxuICB9XG59Iiwic2lnbmF0dXJlIjoiUStVT0JaR3AvTUFtSlFOeE9RcHgrTEVkU0FuVm1lUWFlbng2ZHZuRnRISXNpUEllRDRvWnBoMnpCL0FhbWZMKy9GQVNqcS82RXZFeU4zOVJOMElyREoyNWYrZVdKa2ZDUmJ5U3l4ek1WNVp1UUwvb0x4N3REZDRoR0FOcUtPUEtjZElyNGo1UTFNWXpKbGVXYXBqZ0xIUkVkRDQ0c0cxNW1FZkJNMHN1dlZFPSJ9",
+        "eyJkYXRhIjoie1xuICBcInRpbWVcIjogMTY3NTM0MzgxNDAwMCxcbiAgXCJ2YWxpZFVudGlsXCI6IDE2NzU0MzAyMTQwMDAsXG4gIFwidXNlclwiOiBcImZvb2JhclwiLFxuICBcInN0YXR1c1wiOiBcImd1ZXN0XCIsXG4gIFwiaXBzXCI6IFtdLFxuICBcImFwcFwiOiB7XG4gICAgXCJuYW1lXCI6IFwiZm9vXCIsXG4gICAgXCJ2ZXJzaW9uXCI6IFwiMS4yLjNcIixcbiAgICBcInBsYXRmb3JtXCI6IFwidGVzdFwiLFxuICAgIFwib2tcIjogdHJ1ZVxuICB9XG59Iiwic2lnbmF0dXJlIjoiSHQ0VHozem1ubE9Vb2FQVHU2WkxvU01QSlIwUER0d0NTSUFHa0F4QUYvOU8zbGNQRFp6VStacTZxZzY1QUJ0elkxUTFqZEx5SHpHaUVNalBheVdGcHhYSXp0TzN1QnM1WXY1bktsYVZPcjlJQ0NDZUE4R0xLMnVzaStFcWVGTm9yVGVRTkpVN0dqTk1RZUJzL2V0Q3BqSGpEV0Jra1gvK3VpRlZvOGlIdlZJPSJ9",
     });
 
   let manager: Manager;
@@ -100,7 +100,7 @@ describe("client", () => {
         maxDepth: 3,
       })
     ).resolves.toBeUndefined();
-    expect(manager.getAddons().length).toBe(13);
+    expect(manager.getAddons().length).toBe(17);
   });
 
   test("xample-worker2 url", async () => {
@@ -200,15 +200,15 @@ describe("client", () => {
         discover: false,
       })
     ).resolves.toBeUndefined();
-    expect(manager.getAddons().length).toBe(4);
+    expect(manager.getAddons().length).toBe(5);
     expect(manager.getRootAddons().length).toBe(1);
-    expect(manager.getChildAddons().length).toBe(3);
+    expect(manager.getChildAddons().length).toBe(4);
     expect(
       manager
         .getAddons()
         .map((a) => a.getEndpoints())
         .flat().length
-    ).toBe(4);
+    ).toBe(5);
     expect(manager.getAddonLinks().length).toBe(1);
 
     // const addon = manager.getRootAddons()[0];
@@ -226,9 +226,9 @@ describe("client", () => {
         discover: false,
       })
     ).resolves.toBeUndefined();
-    expect(manager.getAddons().length).toBe(4);
+    expect(manager.getAddons().length).toBe(5);
     expect(manager.getRootAddons().length).toBe(1);
-    expect(manager.getChildAddons().length).toBe(3);
+    expect(manager.getChildAddons().length).toBe(4);
 
     const availableAddonProps = manager.getAddons().map((a) => a.props);
     manager.clear();
@@ -240,9 +240,9 @@ describe("client", () => {
         availableAddonProps,
       })
     ).resolves.toBeUndefined();
-    expect(manager.getAddons().length).toBe(4);
+    expect(manager.getAddons().length).toBe(5);
     expect(manager.getRootAddons().length).toBe(1);
-    expect(manager.getChildAddons().length).toBe(3);
+    expect(manager.getChildAddons().length).toBe(4);
 
     manager.getAddonOrThrow("where-to-watch");
     expect(manager.getAddon("where-to-watch")?.infos.requirePath).toMatchObject(
@@ -261,15 +261,15 @@ describe("client", () => {
         discover: false,
       })
     ).resolves.toBeUndefined();
-    expect(manager.getAddons().length).toBe(4);
+    expect(manager.getAddons().length).toBe(5);
     manager.getAddonOrThrow("where-to-watch");
     expect(manager.getCatalog("tmdb", "movie")?.id).toBe("movie");
     expect(manager.getCatalog("tmdb", "series")?.id).toBe("series");
 
     expect(manager.getRootAddons().length).toBe(1);
-    expect(manager.getChildAddons().length).toBe(3);
+    expect(manager.getChildAddons().length).toBe(4);
 
-    expect(manager.getDashboards().length).toBe(4);
+    expect(manager.getDashboards().length).toBe(5);
 
     const directory = manager
       .getDashboards()
@@ -277,11 +277,11 @@ describe("client", () => {
     expect(directory).toBeTruthy();
     directory.args = {
       ...directory.args,
-      cursor: 50,
+      cursor: 100,
     };
 
     const r1 = await manager.callDirectory({ directory });
-    expect(r1.items.length).toBe(60);
+    expect(r1.items.length).toBe(140);
 
     let item = <PlayableItem>r1.items[Math.floor(r1.items.length / 3)];
     console.log(
@@ -314,7 +314,7 @@ describe("client", () => {
 
     const dashboard = manager
       .getDashboards()
-      .find((d) => d.id === "ted-Science") as BaseDirectoryItem;
+      .find((d) => d.id === "ted-Technology") as BaseDirectoryItem;
     expect(dashboard).toBeTruthy();
     expect(dashboard.options).toBeTruthy();
     expect(dashboard.features).toBeTruthy();
@@ -411,14 +411,14 @@ describe("client", () => {
       .find((d) => d.id === "movie/popular") as BaseDirectoryItem;
     expect(d1).toBeTruthy();
     const r1 = await manager.callDirectory({ directory: d1 });
-    expect(r1.items.length).toBe(60);
+    expect(r1.items.length).toBe(140);
 
     const d2 = manager
       .getDashboards()
       .find((d) => d.id === "series/popular") as BaseDirectoryItem;
     expect(d2).toBeTruthy();
     const r2 = await manager.callDirectory({ directory: d2 });
-    expect(r2.items.length).toBe(60);
+    expect(r2.items.length).toBe(140);
 
     expect(JSON.stringify(r1.items)).not.toEqual(JSON.stringify(r2.items));
 
@@ -621,7 +621,7 @@ describe("client", () => {
         "test",
         "tmdb",
         "tubitv",
-        "wer-streamt-es",
+        "werstreamtes",
         "xample-bundle1",
         "xample-worker-iptv",
         "xample-worker1",
@@ -637,7 +637,7 @@ describe("client", () => {
     manager.getAddonOrThrow("test");
   });
 
-  test("test available, watchup", async () => {
+  test("test available, where-to-watch", async () => {
     const t1 = Date.now();
     await expect(
       manager.load({
@@ -646,7 +646,7 @@ describe("client", () => {
         discover: true,
       })
     ).resolves.toBeUndefined();
-    expect(manager.getAddons().length).toBe(11);
+    expect(manager.getAddons().length).toBe(12);
     manager.getAddonOrThrow("tmdb");
     manager.getAddonOrThrow("youtube-resolver");
     console.log("t1", Date.now() - t1);
@@ -663,15 +663,15 @@ describe("client", () => {
         availableAddonProps: manager.getAddons().map((addon) => addon.props),
       })
     ).resolves.toBeUndefined();
-    expect(m2.getAddons().length).toBe(4);
+    expect(m2.getAddons().length).toBe(5);
     m2.getAddonOrThrow("tmdb");
     m2.getAddonOrThrow("where-to-watch");
-    m2.getAddonOrThrow("wer-streamt-es");
+    m2.getAddonOrThrow("werstreamtes");
     m2.getAddonOrThrow("youtube-resolver");
     console.log("t2", Date.now() - t2);
 
     expect(m2.getPages().length).toBe(3);
-    expect(m2.getDashboards().length).toBe(4);
+    expect(m2.getDashboards().length).toBe(5);
   });
 
   test("xample-worker-iptv", async () => {
