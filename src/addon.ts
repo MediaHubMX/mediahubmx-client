@@ -13,6 +13,7 @@ import cloneDeep from "lodash.clonedeep";
 import flatten from "lodash.flatten";
 import uniq from "lodash.uniq";
 import semver from "semver";
+import { engineToUserAgent, signatureHeader } from "./engine";
 import { createAddon } from "./model";
 import {
   AddonCallAction,
@@ -58,6 +59,13 @@ export abstract class BaseAddonClass {
     return semver.gt(this.props.version ?? "0.0.0", version ?? "0.0.0");
   }
 
+  public getEngine() {
+    if (!this.props.engine) {
+      throw new Error(`Engine not set for addon ${this.props.id}`);
+    }
+    return this.props.engine!;
+  }
+
   public getActions() {
     return this.props.actions ?? [];
   }
@@ -69,7 +77,7 @@ export abstract class BaseAddonClass {
         endpoints: uniq(
           link.endpoints
             ?.map((ep) => (ep === "." ? this.getEndpoints() : ep))
-            .flat() ?? this.getEndpoints()
+            .flat() ?? this.getEndpoints(),
         ),
       })) ?? [
         {
@@ -108,7 +116,7 @@ export abstract class BaseAddonClass {
 
   public matchesRequirement(req: ConvertedRequirement) {
     return !!this.getEndpoints().find((endpoint) =>
-      req.endpoints.includes(endpoint)
+      req.endpoints.includes(endpoint),
     );
   }
 
@@ -131,7 +139,7 @@ export abstract class BaseAddonClass {
         ...(this.getActions().includes("catalog")
           ? this.props.catalogs?.map((catalog) => catalog.itemTypes ?? []) ?? []
           : []),
-      ])
+      ]),
     );
   }
 
@@ -233,7 +241,7 @@ export abstract class BaseAddonClass {
   }
 
   public abstract call<A extends AddonCallAction>(
-    props: AddonCallProps<A>
+    props: AddonCallProps<A>,
   ): AddonCallResult<A>;
 }
 
@@ -294,7 +302,44 @@ export class AddonClass extends BaseAddonClass {
     }
   }
 
+  private async analyzeAddon({
+    options,
+    input,
+  }: Omit<AddonCallProps<"addon">, "defaultInput" | "action" | "onWarning">) {
+    // Quickly try different endpoints and use the fastest one
+    const results = await analyzeEndpoints({
+      endpoints: this.getEndpoints(),
+      allowServerResponses: false,
+      options,
+      engine: this.props.engine,
+      body: <AddonRequest>input,
+      callback: async (url, fn) => await fn(),
+    });
+    if (results === null || results.length === 0) {
+      throw new Error("No working endpoint found");
+    }
+    const result = results[0];
+
+    // Set engine
+    if (!this.props.engine) {
+      this.props.engine = result.engine;
+    }
+
+    // Update endpoints
+    const data = result.props!;
+    const endpoint = data.endpoints?.[0]!;
+    if (this.props.endpoints?.[0] !== endpoint) {
+      if (!this.props.endpoints) this.props.endpoints = [];
+      const i = this.props.endpoints.indexOf(endpoint);
+      if (i !== -1) this.props.endpoints.splice(i, 1);
+      this.props.endpoints.splice(0, 0, endpoint);
+    }
+
+    return { data, endpoint };
+  }
+
   public async call<A extends AddonCallAction>({
+    defaultInput,
     options,
     action,
     input,
@@ -302,53 +347,57 @@ export class AddonClass extends BaseAddonClass {
   }: AddonCallProps<A>): AddonCallResult<A> {
     if (!this.allowedActions.includes(action)) {
       throw new Error(
-        `Addon ${this.props.id} does not have the action "${action}`
+        `Addon ${this.props.id} does not have the action "${action}`,
       );
     }
 
     input.clientVersion = clientVersion;
 
-    const validated = validateAction(action, "request", input, this.props);
+    let url: string | null = null;
+    let data: AddonCallOutput<A> = null;
+    let tempEndpoint: string | null = null;
+
+    if (action === "addon" || !this.props.engine) {
+      const res = await this.analyzeAddon({
+        options,
+        input: defaultInput,
+      });
+      data = res.data;
+
+      url = getCleanAddonUrl(
+        res.endpoint,
+        undefined,
+        { engine: this.getEngine(), action },
+        <string>this.props.sdkVersion,
+      );
+    }
+
+    const validated = validateAction(
+      this.getEngine(),
+      action,
+      "request",
+      input,
+      this.props,
+    );
     const outAction = <string>validated.action;
     input = validated.data;
 
-    const headers: any = {
-      "user-agent": options.userAgent,
+    if (action !== outAction) {
+      url = getCleanAddonUrl(
+        url!,
+        undefined,
+        { engine: this.getEngine(), action: outAction },
+        <string>this.props.sdkVersion,
+      );
+    }
+
+    const headers: Record<string, string> = {
+      "user-agent": options.userAgent ?? engineToUserAgent(this.getEngine()),
       "content-type": "application/json; charset=utf-8",
     };
-    headers["mediahubmx-signature"] = options.signature ?? "";
+    headers[signatureHeader(this.getEngine())] = options.signature ?? "";
 
-    let url: string;
-    let data: AddonCallOutput<A>;
-
-    if (action === "addon") {
-      // Quickly try different endpoints and use the fastest one
-      const res = await analyzeEndpoints({
-        endpoints: this.getEndpoints(),
-        allowServerResponses: false,
-        options,
-        endpointType: "addon",
-        body: <AddonRequest>input,
-        callback: async (url, fn) => await fn(),
-      });
-      if (res === null || res.length === 0) {
-        throw new Error("No working endpoint found");
-      }
-      data = res[0].props!;
-      const endpoint = data.endpoints?.[0]!;
-      if (this.props.endpoints?.[0] !== endpoint) {
-        if (!this.props.endpoints) this.props.endpoints = [];
-        const i = this.props.endpoints.indexOf(endpoint);
-        if (i !== -1) this.props.endpoints.splice(i, 1);
-        this.props.endpoints.splice(0, 0, endpoint);
-      }
-      url = getCleanAddonUrl(
-        endpoint,
-        undefined,
-        outAction,
-        <string>this.props.sdkVersion
-      );
-    } else {
+    if (action !== "addon") {
       // Slowly fallback to other endpoints
       const body = JSON.stringify(input);
       const it = this.iterateEndpoints();
@@ -361,12 +410,16 @@ export class AddonClass extends BaseAddonClass {
         url = getCleanAddonUrl(
           result.value.endpoint,
           undefined,
-          outAction,
-          <string>this.props.sdkVersion
+          { engine: this.getEngine(), action: outAction },
+          <string>this.props.sdkVersion,
         );
 
         try {
-          const res = await fetch(url, { method: "POST", headers, body });
+          const res = await fetch(url, {
+            method: "POST",
+            headers,
+            body,
+          });
 
           let text: string;
           try {
@@ -379,7 +432,7 @@ export class AddonClass extends BaseAddonClass {
             data = JSON.parse(text);
           } catch (error) {
             throw new Error(
-              `${res.status} ${res.statusText} - ${text.substr(0, 200)}`
+              `${res.status} ${res.statusText} - ${text.substr(0, 200)}`,
             );
           }
         } catch (error) {
@@ -393,13 +446,23 @@ export class AddonClass extends BaseAddonClass {
       }
     }
 
+    if (url === null) {
+      throw new Error("No working endpoint found");
+    }
+
     // Check the response and handle tasks
     for (;;) {
       if ((<any>data)?.kind !== "taskRequest") {
         if ((<any>data)?.error) {
           throw new Error((<any>data).error);
         }
-        return validateAction(action, "response", data, this.props).data;
+        return validateAction(
+          this.getEngine(),
+          action,
+          "response",
+          data,
+          this.props,
+        ).data;
       }
 
       const task: TaskRequest = getClientValidators().models.task.request(data);
@@ -411,7 +474,7 @@ export class AddonClass extends BaseAddonClass {
       } catch (error) {
         if (onWarning) {
           onWarning(
-            new Error(`Failed executing task ${task.id}: ${error.message}`)
+            new Error(`Failed executing task ${task.id}: ${error.message}`),
           );
         }
         taskData = {

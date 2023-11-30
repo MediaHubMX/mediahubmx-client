@@ -38,6 +38,8 @@ import {
 } from "@mediahubmx/schema";
 import { BaseAddonClass } from "./addon";
 
+export type AddonEngine = "mediahubmx" | "mediaurl";
+
 interface ClientKeyPatch {
   /**
    * The `key` field only exists on `@mediahubmx/client` responses.
@@ -78,6 +80,7 @@ interface ClientSourcePatch {
 
 declare module "@mediahubmx/schema" {
   interface Addon {
+    engine?: AddonEngine;
     sdkVersion: string;
   }
 
@@ -134,7 +137,7 @@ export type ManagerLoadProps = {
       endpoints?: string[];
       userInput?: string;
     },
-    error: Error
+    error: Error,
   ) => void;
 
   /**
@@ -180,6 +183,11 @@ export type ManagerLoadProps = {
    * Refresh found addons, defaults to `required`.
    */
   refresh?: "none" | "required" | "all";
+
+  /**
+   * Optional addon engine, default is autodetect.
+   */
+  engine?: AddonEngine;
 };
 
 export type AddonInfos = {
@@ -188,14 +196,14 @@ export type AddonInfos = {
 
 export type AddonCallOptions = {
   /**
-   * MediaHubMX signature. Don't forget to refresh this signature regularly.
+   * Signature. Don't forget to refresh this signature regularly.
    */
   signature?: string;
 
   /**
    * User agent to use.
    */
-  userAgent: string;
+  userAgent?: string;
 
   /**
    * Consider an endpoint as failed after this time. Defaults to 15 seconds.
@@ -239,6 +247,7 @@ type AddonActions = {
 
 export type AddonCallAction = Extract<keyof AddonActions, string>;
 export type AddonCallProps<A extends AddonCallAction> = {
+  defaultInput: AddonActions["addon"]["input"];
   options: AddonCallOptions;
   action: A;
   input: AddonActions[A]["input"];
@@ -252,7 +261,7 @@ export type AddonCallResult<A extends AddonCallAction> = Promise<
 
 type AddonTaskHandler<Request = TaskRequest, Response = TaskResponse> = (
   addon: BaseAddonClass,
-  data: Request
+  data: Request,
 ) => Promise<Response>;
 
 export type AddonTasks = {
@@ -273,11 +282,12 @@ export type AddonEndpointIterator = {
 
 export type AddonResponseResult = {
   isServer: boolean;
+  engine: AddonEngine;
   endpoints: string[] | null;
   props: Addon | null;
 };
 
 export type AnalyzeEndpointCallback = (
   url: string,
-  fn: () => Promise<AddonResponseResult[]>
+  fn: () => Promise<AddonResponseResult[]>,
 ) => Promise<AddonResponseResult[]>;

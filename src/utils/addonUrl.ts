@@ -1,13 +1,14 @@
 import Url from "url-parse";
+import { AddonEngine } from "../types";
 
 export const stripAddonUrl = (url: string) =>
-  url.replace(/\/mediahubmx[^/]*\.json$/, "").replace(/\/$/, "");
+  url.replace(/\/(mediahubmx|mediaurl)[^/]*\.json$/, "").replace(/\/$/, "");
 
 export const getCleanAddonUrl = (
   url: string,
   baseUrl?: string,
-  action?: string,
-  sdkVersion?: string
+  action?: { engine: AddonEngine; action: string },
+  sdkVersion?: string,
 ) => {
   let temp = new Url(baseUrl ?? url);
   temp.set("pathname", stripAddonUrl(temp.pathname));
@@ -20,7 +21,9 @@ export const getCleanAddonUrl = (
       "pathname",
       temp.pathname +
         (temp.pathname === "/" ? "" : "/") +
-        (action === "addon" ? "mediahubmx.json" : `mediahubmx-${action}.json`)
+        (action.action === "addon"
+          ? `${action.engine}.json`
+          : `${action.engine}-${action.action}.json`),
     );
   }
   return temp.toString();

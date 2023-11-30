@@ -25,7 +25,7 @@ const setIntersection = <T>(setA: Set<T>, setB: Set<T>) => {
  */
 export const computeCatalogFeatures = (
   features: CatalogFeatures[],
-  args: CatalogArguments | null
+  args: CatalogArguments | null,
 ): CatalogFeatures => {
   const search = features.find((f) => f?.search)?.search ?? { enabled: false };
   let sort = features.find((f) => f?.sort)?.sort ?? [];
@@ -38,13 +38,13 @@ export const computeCatalogFeatures = (
     if (search.compatibleSort) {
       compatibleSort = setIntersection(
         compatibleSort,
-        new Set(search.compatibleSort)
+        new Set(search.compatibleSort),
       );
     }
     if (search.compatibleFilter) {
       compatibleFilter = setIntersection(
         compatibleFilter,
-        new Set(search.compatibleFilter)
+        new Set(search.compatibleFilter),
       );
     }
   }
@@ -54,7 +54,7 @@ export const computeCatalogFeatures = (
   if (activeSort && activeSort.compatibleFilter) {
     compatibleFilter = setIntersection(
       compatibleFilter,
-      new Set(activeSort.compatibleFilter)
+      new Set(activeSort.compatibleFilter),
     );
   }
   filter = filter.filter((s) => compatibleFilter.has(s.id));
@@ -100,10 +100,10 @@ export const getItemEpisodes = (item: SeriesItem, season: number) => {
 export const getItemEpisode = (
   item: SeriesItem,
   season: number,
-  episode: number
+  episode: number,
 ) => {
   return item.episodes?.find(
-    (child) => child.season === season && child.episode === episode
+    (child) => child.season === season && child.episode === episode,
   );
 };
 
@@ -112,6 +112,11 @@ export const getItemEpisode = (
  * to migrate already existing addon properites from v1.
  */
 export const migrateAddonPropsToV2 = (props: Addon) => {
-  const { data } = validateAction("addon", "response", <any>props);
+  const { data } = validateAction(
+    props.engine!,
+    "addon",
+    "response",
+    <any>props,
+  );
   return createAddon(data);
 };

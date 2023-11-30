@@ -13,6 +13,7 @@ export type {
   AddonCallOptions,
   AddonCallProps,
   AddonCallResult,
+  AddonEngine,
   AddonInfos,
   AddonResponseResult,
   AddonTasks,

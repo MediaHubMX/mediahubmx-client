@@ -1,8 +1,9 @@
 import { AddonRequest } from "@mediahubmx/schema";
-import uniq from "lodash.uniq";
 import Url from "url-parse";
+import { addonEngines, engineToUserAgent } from "../engine";
 import {
   AddonCallOptions,
+  AddonEngine,
   AddonResponseResult,
   AnalyzeEndpointCallback,
 } from "../types";
@@ -10,13 +11,11 @@ import { getCleanAddonUrl } from "./addonUrl";
 import { fetch } from "./fetch";
 import { AddonResponseData, handleResponse } from "./responses";
 
-export type EndpointType = "addon" | "server" | "unknown";
-
 type AnalyzeEndpointsProps = {
   endpoints: string[];
   allowServerResponses?: boolean;
   options: AddonCallOptions;
-  endpointType: EndpointType;
+  engine?: AddonEngine;
   body: AddonRequest;
   callback: AnalyzeEndpointCallback;
 };
@@ -29,12 +28,12 @@ class EndpointFetcher {
   private body: string;
 
   constructor(
+    public readonly engine: AddonEngine,
     public readonly url: string,
     private allowServerResponses: boolean,
     private options: AddonCallOptions,
-    private endpointType: AnalyzeEndpointsProps["endpointType"],
     body: AddonRequest,
-    callback: AnalyzeEndpointCallback
+    callback: AnalyzeEndpointCallback,
   ) {
     this.body = JSON.stringify(body);
     this.cancel = false;
@@ -58,7 +57,7 @@ class EndpointFetcher {
       // Timeout
       const t = setTimeout(
         () => reject(new Error("Timeout")),
-        this.options.endpointTestTimeout
+        this.options.endpointTestTimeout,
       );
 
       // Fetch
@@ -72,7 +71,8 @@ class EndpointFetcher {
           res = await fetch(currentUrl, {
             method: "POST",
             headers: {
-              "user-agent": this.options.userAgent,
+              "user-agent":
+                this.options.userAgent ?? engineToUserAgent(this.engine),
               "content-type": "application/json; charset=utf-8",
             },
             body: this.body,
@@ -86,7 +86,7 @@ class EndpointFetcher {
           ) {
             currentUrl = new Url(
               res.headers.get("location")!,
-              res.url
+              res.url,
             ).toString();
             if (ignore.has(currentUrl)) break;
           } else {
@@ -108,9 +108,11 @@ class EndpointFetcher {
         };
         clearTimeout(t);
 
-        // Check if it's MediaHubMX
-        if (url.pathname.includes("/mediahubmx.json")) {
-          resolve(handleResponse(result, this.allowServerResponses));
+        // Check if it's an addon URL
+        if (url.pathname.includes(`/${this.engine}.json`)) {
+          resolve(
+            handleResponse(this.engine, result, this.allowServerResponses),
+          );
         } else {
           if (res.status >= 400 && res.status < 600) {
             throw new Error(String(res.status));
@@ -132,30 +134,41 @@ export const analyzeEndpoints = async ({
   endpoints,
   allowServerResponses = true,
   options,
-  endpointType,
+  engine,
   body,
   callback,
 }: AnalyzeEndpointsProps): Promise<AddonResponseResult[] | null> => {
   let pending: EndpointFetcher[] = [];
   let result: AddonResponseResult[] | null = null;
-  endpoints = uniq(
-    endpoints.map((endpoint) => getCleanAddonUrl(endpoint, undefined, "addon"))
-  );
 
-  while (!result && (endpoints.length > 0 || pending.length > 0)) {
+  const todo: { url: string; engine: AddonEngine }[] = [];
+  const engines = engine ? [engine] : addonEngines;
+  for (const endpoint of endpoints) {
+    for (const engine of engines) {
+      const url = getCleanAddonUrl(endpoint, undefined, {
+        engine,
+        action: "addon",
+      });
+      if (!todo.find((ep) => ep.url === url)) {
+        todo.push({ url, engine });
+      }
+    }
+  }
+
+  while (!result && (todo.length > 0 || pending.length > 0)) {
     // Start new tasks
-    if (endpoints.length > 0) {
-      const u = endpoints.shift();
+    if (todo.length > 0) {
+      const u = todo.shift();
       if (u) {
         pending.push(
           new EndpointFetcher(
-            u,
+            u.engine,
+            u.url,
             allowServerResponses,
             options,
-            endpointType,
             body,
-            callback
-          )
+            callback,
+          ),
         );
       }
     }
@@ -164,7 +177,7 @@ export const analyzeEndpoints = async ({
     const pp = pending.map((p) => p.promise);
     if (endpoints.length > 0) {
       pp.push(
-        new Promise((resolve) => setTimeout(resolve, options.loadNextTimeout))
+        new Promise((resolve) => setTimeout(resolve, options.loadNextTimeout)),
       );
     }
 

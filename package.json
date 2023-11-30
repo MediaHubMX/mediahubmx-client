@@ -1,11 +1,11 @@
 {
   "name": "@mediahubmx/client",
-  "description": "MediaHubMX client",
-  "version": "1.1.3",
+  "description": "Media addon client",
+  "version": "1.3.1",
   "main": "dist",
   "scripts": {
     "test": "jest",
-    "build": "tsc",
+    "build": "rm -rf dist && tsc",
     "publish": "npm run build && npm publish"
   },
   "dependencies": {
