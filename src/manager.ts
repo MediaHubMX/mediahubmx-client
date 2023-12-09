@@ -25,6 +25,7 @@ import isEqual from "lodash.isequal";
 import uniqBy from "lodash.uniqby";
 import Url from "url-parse";
 import { AddonClass, BaseAddonClass } from "./addon";
+import { getClientVersion } from "./engine";
 import { createItem, createSource, createSubtitle } from "./model";
 import { defaultFetchTask } from "./tasks/fetch";
 import {
@@ -45,8 +46,6 @@ import { filterAddons } from "./utils/filterAddons";
 import { mutateUserInput } from "./utils/mutateUserInput";
 import { isAddonResponse } from "./utils/responses";
 import { selectTranslation } from "./utils/selectTranslation";
-
-const clientVersion: string = require("../package.json").version;
 
 type DefaultRequestParams = {
   /**
@@ -550,7 +549,10 @@ export class Manager {
           engine,
           endpoints: urls,
           options: callOptions!,
-          body: { ...this.defaultRequestParams, clientVersion },
+          body: {
+            ...this.defaultRequestParams,
+            clientVersion: getClientVersion(engine),
+          },
           callback: this.miscOptions.analyzeEndpointCallback,
         });
         if (!result) {

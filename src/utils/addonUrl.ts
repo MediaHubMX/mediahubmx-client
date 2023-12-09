@@ -2,7 +2,10 @@ import Url from "url-parse";
 import { AddonEngine } from "../types";
 
 export const stripAddonUrl = (url: string) =>
-  url.replace(/\/(mediahubmx|mediaurl)[^/]*\.json$/, "").replace(/\/$/, "");
+  url
+    .replace(/\/[^/]+\.watched$/, "")
+    .replace(/\/(mediahubmx|mediaurl)[^/]*\.json$/, "")
+    .replace(/\/$/, "");
 
 export const getCleanAddonUrl = (
   url: string,

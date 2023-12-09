@@ -29,7 +29,7 @@ type Result = {
 const getItemArg = (
   item: MainItem | SubItem,
   meta: Result["meta"],
-  arg: string
+  arg: string,
 ) => {
   if (arg.indexOf("id/") === 0) {
     const a = arg.replace(/^id\//, "");
@@ -47,12 +47,11 @@ export const filterAddons = (
   addons: BaseAddonClass[],
   {
     action = undefined,
-    itemType = undefined,
     item = undefined,
     subItem = undefined,
     url = undefined,
     captchaType = undefined,
-  }: Params
+  }: Params,
 ) => {
   const denied = {};
 
@@ -70,12 +69,6 @@ export const filterAddons = (
     // Actions
     if (action !== undefined && !addon.getActions().includes(action)) {
       denied[props.id].push(`action ${action} !in ${addon.getActions()}`);
-      continue;
-    }
-
-    // Item types
-    if (itemType !== undefined && !addon.getItemTypes().includes(itemType)) {
-      denied[props.id].push(`itemType ${itemType} !in ${addon.getItemTypes()}`);
       continue;
     }
 
@@ -118,7 +111,7 @@ export const filterAddons = (
           }
         } catch (error) {
           console.warn(
-            `Failed parsing pattern ${pattern} of addon ${props.id}: ${error.message}`
+            `Failed parsing pattern ${pattern} of addon ${props.id}: ${error.message}`,
           );
         }
       }
@@ -133,7 +126,7 @@ export const filterAddons = (
       !props.captchaTypes?.includes(captchaType)
     ) {
       denied[props.id].push(
-        `captchaType ${captchaType} !in ${props.captchaTypes}`
+        `captchaType ${captchaType} !in ${props.captchaTypes}`,
       );
       continue;
     }

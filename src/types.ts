@@ -52,10 +52,6 @@ interface ClientCatalogPatch {
   /**
    * The `addonId` field only exists on `@mediahubmx/client` responses.
    */
-  type: "directory";
-  /**
-   * The `addonId` field only exists on `@mediahubmx/client` responses.
-   */
   addonId: string;
   /**
    * The `addonId` field only exists on `@mediahubmx/client` responses.

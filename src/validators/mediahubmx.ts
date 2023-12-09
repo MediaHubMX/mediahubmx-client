@@ -1,5 +1,11 @@
 import { Addon, AddonResponse, getClientValidators } from "@mediahubmx/schema";
+import semver from "semver";
 import { Migrations } from "./types";
+
+const isAddonLegacyV1_3 = (addon?: Addon) => {
+  const sdkVersion = <string>addon?.sdkVersion;
+  return !sdkVersion || semver.lt(sdkVersion, "1.3.0");
+};
 
 export const mediahubmx: Migrations = {
   addon: {
@@ -14,6 +20,25 @@ export const mediahubmx: Migrations = {
         any._isLegacyRepositoryAddon = true;
       }
       delete any.type;
+
+      if (isAddonLegacyV1_3(addon)) {
+        addon.catalogs?.forEach((catalog) => {
+          if (!catalog.kind) {
+            let itemTypes: any = null;
+            if (catalog.itemTypes) {
+              itemTypes = catalog.itemTypes;
+              delete catalog.itemTypes;
+            } else if (addon.itemTypes) {
+              itemTypes = addon.itemTypes;
+              delete addon.itemTypes;
+            }
+            catalog.kind =
+              itemTypes?.length === 1 && itemTypes[0] === "iptv"
+                ? "iptv"
+                : "vod";
+          }
+        });
+      }
 
       return { data: addon };
     },

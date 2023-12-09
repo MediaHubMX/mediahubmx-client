@@ -9,7 +9,6 @@ import {
   getClientValidators,
 } from "@mediahubmx/schema";
 import semver from "semver";
-import { mediahubmx } from "./mediahubmx";
 import { Migrations } from "./types";
 
 const isAddonLegacyV1 = (addon?: Addon) => {
@@ -17,9 +16,14 @@ const isAddonLegacyV1 = (addon?: Addon) => {
   return !sdkVersion || semver.lt(sdkVersion, "2.0.0-alpha.0");
 };
 
-const isAddonLegacyV2 = (addon?: Addon) => {
+const isAddonLegacyV2_2 = (addon?: Addon) => {
   const sdkVersion = <string>addon?.sdkVersion;
   return !sdkVersion || semver.lt(sdkVersion, "2.2.0-alpha.0");
+};
+
+const isAddonLegacyV2_4 = (addon?: Addon) => {
+  const sdkVersion = <string>addon?.sdkVersion;
+  return !sdkVersion || semver.lt(sdkVersion, "2.4.0");
 };
 
 const migrateDirectoryV2 = (
@@ -147,7 +151,7 @@ export const mediaurl: Migrations = {
       }
       delete data.dashboards;
 
-      if (isAddonLegacyV2(addon)) {
+      if (isAddonLegacyV2_2(addon)) {
         addon.catalogs?.forEach((catalog) => migrateDirectoryV2(catalog));
         addon.pages?.forEach((page) => {
           page.dashboards?.forEach((dashboard) => {
@@ -162,7 +166,26 @@ export const mediaurl: Migrations = {
         });
       }
 
-      return mediahubmx.addon!.response!(data, callingAddon);
+      if (isAddonLegacyV2_4(addon)) {
+        addon.catalogs?.forEach((catalog) => {
+          if (!catalog.kind) {
+            let itemTypes: any = null;
+            if (catalog.itemTypes) {
+              itemTypes = catalog.itemTypes;
+              delete catalog.itemTypes;
+            } else if (addon.itemTypes) {
+              itemTypes = addon.itemTypes;
+              delete addon.itemTypes;
+            }
+            catalog.kind =
+              itemTypes?.length === 1 && itemTypes[0] === "iptv"
+                ? "iptv"
+                : "vod";
+          }
+        });
+      }
+
+      return { data: addon };
     },
   },
   repository: {
@@ -217,7 +240,7 @@ export const mediaurl: Migrations = {
             );
           }
         }
-      } else if (isAddonLegacyV2(callingAddon)) {
+      } else if (isAddonLegacyV2_2(callingAddon)) {
         if (data?.similarItems) {
           (data.similarItems as DirectoryItem[]).forEach((directory) => {
             if (directory.type === undefined || directory.type === null) {

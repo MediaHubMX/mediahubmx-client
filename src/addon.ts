@@ -4,16 +4,18 @@ import {
   AddonRequest,
   Catalog,
   getClientValidators,
-  ItemTypes,
   Page,
   TaskRequest,
   TaskResponse,
 } from "@mediahubmx/schema";
 import cloneDeep from "lodash.clonedeep";
-import flatten from "lodash.flatten";
 import uniq from "lodash.uniq";
 import semver from "semver";
-import { engineToUserAgent, signatureHeader } from "./engine";
+import {
+  engineToUserAgent,
+  getClientVersion,
+  getSignatureHeader,
+} from "./engine";
 import { createAddon } from "./model";
 import {
   AddonCallAction,
@@ -28,8 +30,6 @@ import { getCleanAddonUrl, stripAddonUrl } from "./utils/addonUrl";
 import { analyzeEndpoints } from "./utils/analyzeEndpoints";
 import { fetch } from "./utils/fetch";
 import { validateAction } from "./validators";
-
-const clientVersion: string = require("../package.json").version;
 
 export abstract class BaseAddonClass {
   public readonly props: Addon;
@@ -132,28 +132,15 @@ export abstract class BaseAddonClass {
     return false;
   }
 
-  public getItemTypes(): ItemTypes[] {
-    return uniq(
-      flatten([
-        ...(this.props.itemTypes ?? []),
-        ...(this.getActions().includes("catalog")
-          ? this.props.catalogs?.map((catalog) => catalog.itemTypes ?? []) ?? []
-          : []),
-      ]),
-    );
-  }
-
   protected convertCatalog(catalog: Catalog): Catalog {
     const id = catalog.id ?? "";
     return {
       ...catalog,
-      type: "directory",
       addonId: catalog.addonId ?? this.props.id,
       catalogId: id,
       id,
       key: `${this.props.id}/${id}`,
       name: catalog.name ?? this.props.name,
-      itemTypes: catalog.itemTypes ?? this.getItemTypes(),
       options: {
         shape: "portrait",
         size: "normal",
@@ -165,9 +152,9 @@ export abstract class BaseAddonClass {
 
   protected createDefaultCatalog(): Catalog {
     return {
-      type: "directory",
       addonId: this.props.id,
       catalogId: "",
+      kind: "vod",
       id: "",
       key: `${this.props.id}/`,
     };
@@ -201,7 +188,12 @@ export abstract class BaseAddonClass {
   public getPages() {
     const pages = [...(this.props.pages ?? [])];
     if (pages.length === 0 && this.getActions().includes("catalog")) {
-      pages.push(<Page>{ dashboards: this.getCatalogs() });
+      pages.push(<Page>{
+        dashboards: this.getCatalogs().map((c) => ({
+          ...c,
+          type: "directory",
+        })),
+      });
     }
     return pages.map((page) => {
       page = {
@@ -351,11 +343,10 @@ export class AddonClass extends BaseAddonClass {
       );
     }
 
-    input.clientVersion = clientVersion;
-
     let url: string | null = null;
     let data: AddonCallOutput<A> = null;
-    let tempEndpoint: string | null = null;
+
+    input.clientVersion = getClientVersion(this.props.engine);
 
     if (action === "addon" || !this.props.engine) {
       const res = await this.analyzeAddon({
@@ -363,6 +354,8 @@ export class AddonClass extends BaseAddonClass {
         input: defaultInput,
       });
       data = res.data;
+
+      input.clientVersion = getClientVersion(this.getEngine());
 
       url = getCleanAddonUrl(
         res.endpoint,
@@ -395,7 +388,7 @@ export class AddonClass extends BaseAddonClass {
       "user-agent": options.userAgent ?? engineToUserAgent(this.getEngine()),
       "content-type": "application/json; charset=utf-8",
     };
-    headers[signatureHeader(this.getEngine())] = options.signature ?? "";
+    headers[getSignatureHeader(this.getEngine())] = options.signature ?? "";
 
     if (action !== "addon") {
       // Slowly fallback to other endpoints
